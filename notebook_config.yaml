@@ -1,0 +1,189 @@
+## the list of environment types which the user can pick from (in the spawner menu)
+##
+environments:
+  - ## the name of this environment
+    ##
+    name: JupyterLab
+
+    ## if true, this environment will be hidden in the spawner ui
+    ##
+    hidden: false
+
+    ## configs for each possible framework under `options[].frameworks`
+    ##
+    frameworkConfigs:
+      - ## the key used to reference this framework in the `options[].framework` map
+        ##
+        key: jupyter_version
+
+        ## the heading used in the spawner UI
+        ##
+        heading: Jupyter Version
+
+        ## the sub-heading used in the spawner UI
+        ##
+        subHeading: XXX XXX
+
+        ## a number which is used to determine which frameworks are presented to the user first
+        ## (lower is higher)
+        ##
+        priority: 0
+      - key: python_version
+        heading: Python Version
+        subHeading: XXX XXX
+        priority: 10
+      - key: my_package
+        heading: Some Custom Package
+        subHeading: XXX XXX
+        priority: 100
+      - key: spark_version
+        heading: Spark Version
+        subHeading: XXX XXX
+        priority: 200
+
+    ## the svg file in `ConfigMap/notebook-logos` representing this environment (in the notebooks table)
+    ##
+    icon-name: jupyter-icon.svg
+
+    ## the svg file in `ConfigMap/notebook-logos` representing the environment (in the spawner menu)
+    ##
+    logo-name: jupyter-logo.svg
+
+    ## if true, the user can provide a custom container image (not from the `options` dropdown)
+    ##
+    custom: false
+
+    ## a list of image options which the user can pick from
+    ##
+    options:
+      - ## sets `Notebook().spec.template.spec.containers[0].image`
+        ##
+        image: public.ecr.aws/j1r0q0g6/notebooks/notebook-servers/jupyter-tensorflow-full:v1.3.0-rc.1
+
+        ## a map with the frameworks and versions in the image
+        ## (all keys must be defined in `frameworkConfigs`)
+        ##
+        frameworks:
+          jupyter_version: X.X.X
+          python_version: 3.8.0
+          my_package: X.X.X
+
+        ## same fields as `configDefaults`
+        ##
+        configOverrides: {}
+
+    ## the default settings for each option in this environment
+    ##
+    configDefaults:
+
+      ## sets `Notebook().spec.template.spec.containers[0].imagePullPolicy`
+      ##
+      imagePullPolicy: IfNotPresent
+
+      ## network endpoint configs
+      ## (if multiple are defined, "Connect" will become a drop-down button)
+      ##
+      endpoints:
+        - ## sets `Notebook().spec.template.spec.containers[0].ports[0].name`
+          ##
+          name: main
+
+          ## sets `Notebook().spec.template.spec.containers[0].ports[0].containerPort`
+          ##
+          port: 8080
+
+          ## sets `Notebook().metadata.annotations."kubeflow.org/istio-http-uri-prefix"`
+          ## which sets: `VirtualService().spec.http.match[0].uri.prefix`
+          ## https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRewrite
+          ##
+          baseUri: "/"
+
+          ## sets `Notebook().metadata.annotations."kubeflow.org/istio-http-headers-request-set"`
+          ## which sets `VirtualService().spec.http.match[0].headers.request.set`
+          ## https://istio.io/latest/docs/reference/config/networking/virtual-service/#Headers-HeaderOperations
+          requestHeaders:
+            key1: value1
+            key2: value2
+
+## mount groups (dropdown options for configmaps/secretes to mount as Envirnonment variables or files)
+## IDEA: have special ones for SSH keys, AWS Tokens
+
+## configs related to storage
+##
+storage:
+
+  ## configs for the persistent volume mounted at `/home/kubeflow`
+  ##
+  homeVolume:
+
+    ## the persistent volume name
+    ##
+    ## templated values:
+    ## - {notebook-name} the name of the Notebook Server
+    ##
+    name: "workspace-{notebook-name}"
+
+    ## configs for the storage class
+    ##
+    storageClass:
+      default: "my-class-1"
+      options:
+        - "my-class-1"
+        - "my-class-2"
+
+    ## configs for size
+    ##
+    size:
+      default: "10Gi"
+      options:
+        - "10Gi"
+        - "20Gi"
+        - "50Gi"
+
+      ## if true, user can specify the size as text input
+      custom: false
+
+  dataVolumes:
+
+    ## the persistent volume name
+    ##
+    name: "data-{notebook-name}"
+
+    ??? how to allow admins to allow NFS mounts
+
+  # mount point
+
+# sets `Notebook().metadata.annotations."kubeflow.org/resource-group"`
+# NOTE
+#  - there is a reconciliation loop in the notebook-controller
+#    (if annotation references a non-existent resource-group, or annotation is not defined
+#     default to the first defined resource group)
+resourceGroups:
+  - # the name of this image group
+    name: Big with GPU
+
+    # xxxxxx
+    cpu:
+      ...
+
+    # xxxxxx
+    ram:
+      ...
+
+    # ?? should be accelerators
+    gpu:
+      ...
+
+    # xxxxxx
+    affinity:
+      ...
+
+    # xxxxxx
+    tollerations:
+      ...testffsfgegegdgdgrgdhdhherergdrrgdfghr
+
+## where do these things sit
+## - pod defaults (I think we should remove this)
+## - shm (I think we should remove this)
+## - hostPort
+## - how to mount secrets/configmaps
